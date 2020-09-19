@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Quiz RU-JP</title>
+        <style>
+            .button {
+                background-color: #4CAF50;
+                border: none;
+                color: white;
+                padding: 10px 32px;
+                text-align: center;
+                text-decoration: none;
+                display: inline-block;
+                font-size: 16px;
+                margin: 4px 2px;
+                cursor: pointer;
+            }
+        </style>
+    </head>
+    <body>
+        <p>Question:  <b>{{.Qword}}</b></p>
+        <ul style="list-style-type: none;padding: 0;">
+            <li><a class="button" href="/answer/?a={{.Answer1}}">{{.Answer1}}</a></li>
+            <li><a class="button" href="/answer/?a={{.Answer2}}">{{.Answer2}}</a></li>
+            <li><a class="button" href="/answer/?a={{.Answer3}}">{{.Answer3}}</a></li>
+            <li><a class="button" href="/answer/?a={{.Answer4}}">{{.Answer4}}</a></li>
+        </ul>
+    </body>
+</html>
