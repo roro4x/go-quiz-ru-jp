@@ -1,149 +1,144 @@
 package main
 
 import (
-	"html/template"
+	"database/sql"
+	"encoding/json"
+	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
 	"strings"
-	"time"
+
+	"github.com/gorilla/mux"
+	_ "github.com/lib/pq"
 )
 
-var dictionary map[int]map[string]string
-var questionWord string
-var answerWord string
-var answerVar1 string
-var answerVar2 string
-var answerVar3 string
-var answerVar4 string
+const (
+	host     = "localhost"
+	port     = 5432
+	user     = "postgres"
+	password = "123123"
+	dbname   = "postgres"
+)
 
-var lessonString string = "Я - わたし/ Ты - あなた/Он, Она - あのひと/Учитель - せんせい/Студент - がくせい/Врач - いしゃ/Ученый - けんきゅうしゃ/Инженер - エンジニア"
+var dbc *sql.DB
+var sqlInsertWord = `INSERT INTO dictionary VALUES($1, $2, $3, nextval('dictionary_id')) RETURNING dictionary_id;`
 
-type indexPageVariables struct {
-	Rus     string
-	Jap     string
-	Qword   string
-	Answer1 string
-	Answer2 string
-	Answer3 string
-	Answer4 string
+type word struct {
+	LessonID int    `json:"lesson_id"`
+	RuWord   string `json:"ru_word"`
+	JpWord   string `json:"jp_word"`
 }
 
-type resultPage struct {
-	ResMessage string
-	RAnswer    string
+type wordPair struct {
+	Ru string
+	Jp string
 }
 
-func lessonParser(s string) []string { return strings.Split(s, "/") }
+type task struct {
+	QWord  string `json:"question_word"`
+	TrWord string `json:"right_answer"`
+	Word1  string `json:"wrod1"`
+	Word2  string `json:"wrod2"`
+	Word3  string `json:"wrod3"`
+	Word4  string `json:"wrod4"`
+}
 
-func dictionaryParser(s string) []string { return strings.Split(s, "-") }
-
-func createDictionary(s string) (m map[int]map[string]string) {
-	m = make(map[int]map[string]string)
-	for i := 0; i < len(lessonParser(lessonString)); i++ {
-		mm := make(map[string]string)
-		mm["Rus"] = strings.TrimSpace(dictionaryParser(lessonParser(lessonString)[i])[0])
-		mm["Jap"] = strings.TrimSpace(dictionaryParser(lessonParser(lessonString)[i])[1])
-		m[len(m)+1] = mm
+func addNewWord(w http.ResponseWriter, r *http.Request) {
+	var word word
+	_ = json.NewDecoder(r.Body).Decode(&word)
+	id := 0
+	err := dbc.QueryRow(sqlInsertWord, word.LessonID, word.RuWord, word.JpWord).Scan(&id)
+	if err != nil {
+		panic(err)
 	}
-	return
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(id)
 }
 
-func getPair(m map[int]map[string]string, i int) map[string]string {
-	return m[i]
-}
-
-func getRandomNums(m map[int]map[string]string) (nums []int) {
-	nums = []int{0, 0, 0, 0}
-	rand.Seed(time.Now().UTC().UnixNano())
-	i := 0
-	for i < 4 {
-		num := rand.Intn(len(m))
-		if !contains(nums, num) {
-			nums[i] = num
-			i++
+func getTask(w http.ResponseWriter, r *http.Request) {
+	type LessonID struct {
+		LessonsID []string `json:"lessons_id"`
+	}
+	var lID LessonID
+	m := make(map[int]wordPair)
+	var qWord string
+	var trWord string
+	_ = json.NewDecoder(r.Body).Decode(&lID)
+	lIDstr := strings.Join(lID.LessonsID, ",")
+	var sqlSelectTask = "SELECT ru_word, jp_word FROM dictionary WHERE lesson_id in (" + lIDstr + ") ORDER BY random() LIMIT 4;"
+	rows, err := dbc.Query(sqlSelectTask)
+	if err != nil {
+		panic(err)
+	}
+	i := 1
+	for rows.Next() {
+		var ru string
+		var jp string
+		err = rows.Scan(&ru, &jp)
+		if err != nil {
+			panic(err)
 		}
-	}
-	return
-}
-
-func contains(a []int, x int) bool {
-	for _, n := range a {
-		if x == n {
-			return true
+		m[i] = wordPair{
+			Ru: ru,
+			Jp: jp,
 		}
+		i++
 	}
-	return false
-}
-
-func generatePageVariables() {
-	task := getRandomNums(dictionary)
-	getPair(dictionary, task[0])
-	var m map[string]string = getPair(dictionary, task[0])
-	var question []string
-	for i := 0; i < 4; i++ {
-		question = append(question, getPair(dictionary, task[i])["Jap"])
+	err = rows.Err()
+	if err != nil {
+		panic(err)
 	}
-	rand.Shuffle(len(question), func(i, j int) {
-		question[i], question[j] = question[j], question[i]
+	qWord = wordPair(m[1]).Ru
+	trWord = wordPair(m[1]).Jp
+	rand.Shuffle(len(m), func(i, j int) {
+		m[i], m[j] = m[j], m[i]
 	})
-	questionWord = m["Rus"]
-	answerWord = m["Jap"]
-	answerVar1 = question[0]
-	answerVar2 = question[1]
-	answerVar3 = question[2]
-	answerVar4 = question[3]
+	t := task{
+		QWord:  qWord,
+		TrWord: trWord,
+		Word1:  wordPair(m[1]).Jp,
+		Word2:  wordPair(m[2]).Jp,
+		Word3:  wordPair(m[3]).Jp,
+		Word4:  wordPair(m[4]).Jp,
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(t)
 }
 
-func index(w http.ResponseWriter, r *http.Request) {
-	generatePageVariables()
-	QuizVariables := indexPageVariables{
-		Jap:     answerWord,
-		Rus:     questionWord,
-		Qword:   questionWord,
-		Answer1: answerVar1,
-		Answer2: answerVar2,
-		Answer3: answerVar3,
-		Answer4: answerVar4,
-	}
-	t, err := template.ParseFiles("index.html")
+func checkTask(w http.ResponseWriter, r *http.Request) {
+	var word word
+	var res string
+	_ = json.NewDecoder(r.Body).Decode(&word)
+	err := dbc.QueryRow("SELECT CASE WHEN EXISTS (SELECT * FROM dictionary WHERE ru_word = '" + word.RuWord + "' and jp_word = '" + word.JpWord + "') THEN 'RIGHT' ELSE 'WRONG' END").Scan(&res)
 	if err != nil {
-		log.Print("template parsing error: ", err)
+		panic(err)
 	}
-	err = t.Execute(w, QuizVariables)
-	if err != nil {
-		log.Print("template executing error: ", err)
-	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(res)
 }
 
-func answerPage(w http.ResponseWriter, r *http.Request) {
-	s := r.URL.Query().Get("a")
-	var PageVariables resultPage
-	if s == answerWord {
-		PageVariables = resultPage{
-			ResMessage: "Answer is right",
-			RAnswer:    answerWord,
-		}
-	}
-	if !(s == answerWord) {
-		PageVariables = resultPage{
-			ResMessage: "Answer is wrong",
-			RAnswer:    answerWord,
-		}
-	}
-	t, err := template.ParseFiles("answerPage.html")
+func dbConnect() *sql.DB {
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
+		"password=%s dbname=%s sslmode=disable",
+		host, port, user, password, dbname)
+	db, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
-		log.Print("template parsing error: ", err)
+		panic(err)
 	}
-	err = t.Execute(w, PageVariables)
+	err = db.Ping()
 	if err != nil {
-		log.Print("template executing error: ", err)
+		panic(err)
 	}
+	fmt.Println("Successfully connected!")
+	return db
 }
 
 func main() {
-	dictionary = createDictionary(lessonString)
-	http.HandleFunc("/", index)
-	http.HandleFunc("/answer/", answerPage)
-	http.ListenAndServe(":8080", nil)
+	dbc = dbConnect()
+	r := mux.NewRouter()
+	r.HandleFunc("/word", addNewWord).Methods("POST")
+	r.HandleFunc("/task", getTask).Methods("POST")
+	r.HandleFunc("/check", checkTask).Methods("POST")
+	log.Fatal(http.ListenAndServe(":8080", r))
 }
