@@ -47,9 +47,11 @@
                 $(".listButton").click(function(){
                     var a = $(this).html();
                     var q = $("#quiz-form-run span").html();
-                    console.log(a);
-                    console.log(q);
-                    var jsonStr = '{"ru_word": "'+q+'", "jp_word": "'+a+'"}'
+                    var obj={
+                        'ru_word': q,
+                        'jp_word': a
+                    }
+                    var jsonStr = JSON.stringify(obj);
                     $.ajax({
                         url: 'http://localhost:8080/api/check', 
                         type: 'POST',
@@ -57,11 +59,13 @@
                         dataType: 'text',
                         success: function (data) {
                             var res = $.trim(data.replace(/\"/g, ""));
-                            if (res == 'WRONG'){
-                                alert("WRONG");
-                            }
-                            if (res == 'RIGHT'){
-                                alert("RIGHT");
+                            switch (res) {
+                                case 'WRONG':
+                                    alert("WRONG");
+                                break;
+                                case 'RIGHT':
+                                    alert("RIGHT");
+                                break;
                             }
                         }
                     });
@@ -97,7 +101,7 @@
                 margin: -150px 0 0 -160px;
                 min-width: 400px;
                 border: 5px solid red;
-                border-radius: 20px;
+                border-radius: 10px;
             }
             #quizForm {
                 float: left;
@@ -174,7 +178,7 @@
             <div id="quizForm">
                 <button id="buttonStart">Run</button>
                 <div id="quiz-form-run">
-                    <p style="text-align: center;font-style: italic;font-size: 12pt;">Word: <span style="font-weight: 800;font-size: 15pt;font-style: normal;">Hello</span></p>
+                    <p style="text-align: center;font-style: italic;font-size: 14pt;">Word: <span style="font-weight: 800;font-size: 15pt;font-style: normal;">Hello</span></p>
                     <button id="b1" class="listButton">...</button>
                     <button id="b2" class="listButton">...</button>
                     <button id="b3" class="listButton">...</button>

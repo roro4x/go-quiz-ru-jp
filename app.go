@@ -125,7 +125,7 @@ func checkTask(w http.ResponseWriter, r *http.Request) {
 
 func getLessons(w http.ResponseWriter, r *http.Request) {
 	var aid []int
-	rows, err := dbc.Query("SELECT DISTINCT(lesson_id) FROM dictionary;")
+	rows, err := dbc.Query("SELECT DISTINCT(lesson_id) FROM dictionary ORDER BY lesson_id ASC;")
 	if err != nil {
 		panic(err)
 	}
