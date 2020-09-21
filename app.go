@@ -70,7 +70,7 @@ func getTask(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-	i := 1
+	i := 0
 	for rows.Next() {
 		var ru string
 		var jp string
@@ -88,18 +88,18 @@ func getTask(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-	qWord = wordPair(m[1]).Ru
-	trWord = wordPair(m[1]).Jp
+	qWord = wordPair(m[0]).Ru
+	trWord = wordPair(m[0]).Jp
 	rand.Shuffle(len(m), func(i, j int) {
 		m[i], m[j] = m[j], m[i]
 	})
 	t := task{
 		QWord:  qWord,
 		TrWord: trWord,
-		Word1:  wordPair(m[1]).Jp,
-		Word2:  wordPair(m[2]).Jp,
-		Word3:  wordPair(m[3]).Jp,
-		Word4:  wordPair(m[4]).Jp,
+		Word1:  wordPair(m[0]).Jp,
+		Word2:  wordPair(m[1]).Jp,
+		Word3:  wordPair(m[2]).Jp,
+		Word4:  wordPair(m[3]).Jp,
 	}
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
