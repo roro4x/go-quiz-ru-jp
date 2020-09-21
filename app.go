@@ -38,10 +38,10 @@ type wordPair struct {
 type task struct {
 	QWord  string `json:"question_word"`
 	TrWord string `json:"right_answer"`
-	Word1  string `json:"wrod1"`
-	Word2  string `json:"wrod2"`
-	Word3  string `json:"wrod3"`
-	Word4  string `json:"wrod4"`
+	Word1  string `json:"word1"`
+	Word2  string `json:"word2"`
+	Word3  string `json:"word3"`
+	Word4  string `json:"word4"`
 }
 
 func addNewWord(w http.ResponseWriter, r *http.Request) {
@@ -101,6 +101,9 @@ func getTask(w http.ResponseWriter, r *http.Request) {
 		Word3:  wordPair(m[3]).Jp,
 		Word4:  wordPair(m[4]).Jp,
 	}
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type,access-control-allow-origin, access-control-allow-headers")
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(t)
 }
@@ -113,6 +116,9 @@ func checkTask(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type,access-control-allow-origin, access-control-allow-headers")
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(res)
 }
@@ -136,6 +142,9 @@ func getLessons(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type,access-control-allow-origin, access-control-allow-headers")
 	json.NewEncoder(w).Encode(aid)
 }
 
@@ -158,9 +167,9 @@ func dbConnect() *sql.DB {
 func main() {
 	dbc = dbConnect()
 	r := mux.NewRouter()
-	r.HandleFunc("/word", addNewWord).Methods("POST")
-	r.HandleFunc("/task", getTask).Methods("POST")
-	r.HandleFunc("/check", checkTask).Methods("POST")
-	r.HandleFunc("/lessons", getLessons).Methods("GET")
+	r.HandleFunc("/api/word", addNewWord).Methods("POST")
+	r.HandleFunc("/api/task", getTask).Methods("POST")
+	r.HandleFunc("/api/check", checkTask).Methods("POST")
+	r.HandleFunc("/api/lessons", getLessons).Methods("GET")
 	log.Fatal(http.ListenAndServe(":8080", r))
 }

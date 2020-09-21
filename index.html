@@ -2,28 +2,189 @@
 <html>
     <head>
         <title>Quiz RU-JP</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+        <script type="text/javascript">
+            $(document).ready(function() {
+                $("#getLessonsId").click(function(){
+                    $.ajax({
+                        url: 'http://localhost:8080/api/lessons', 
+                        type: 'GET',
+                        success: function (data) {
+                            $(".list-lesson").empty();
+                            $(data).each(function(){
+                                $(".list-lesson").append('<li><input type="checkbox" id="lesson'+this+'" name="'+this+'"checked><label for="lesson'+this+'">LESSON'+this+'</label></li>');
+                            });
+                        }
+                    });
+                });
+                $("#buttonStart").click(function(){
+                    if ($('.list-lesson li input[type="checkbox"]').length > 1){
+                        var lessons = []
+                        $('.list-lesson li input[type="checkbox"]').each(function(){
+                            if($(this).is(":checked")) {
+                                lessons.push('"'+$(this).attr("name")+'"');
+                            }
+                        });
+                        var jsonStr = '{"lessons_id": ['+lessons+']}';
+                        $.ajax({
+                            url: 'http://localhost:8080/api/task', 
+                            type: 'POST',
+                            data: jsonStr,
+                            dataType: 'json',
+                            success: function (data) {
+                                $("#quiz-form-run span").html(data.question_word);
+                                $("#b1").html(data.word1)
+                                $("#b2").html(data.word2)
+                                $("#b3").html(data.word3)
+                                $("#b4").html(data.word4)
+                            }
+                        });
+                    } else {
+                        alert('Please, press "Get Lessons"');
+                    }
+                });
+                $(".listButton").click(function(){
+                    var a = $(this).html();
+                    var q = $("#quiz-form-run span").html();
+                    console.log(a);
+                    console.log(q);
+                    var jsonStr = '{"ru_word": "'+q+'", "jp_word": "'+a+'"}'
+                    $.ajax({
+                        url: 'http://localhost:8080/api/check', 
+                        type: 'POST',
+                        data: jsonStr,
+                        dataType: 'text',
+                        success: function (data) {
+                            var res = $.trim(data.replace(/\"/g, ""));
+                            if (res == 'WRONG'){
+                                alert("WRONG");
+                            }
+                            if (res == 'RIGHT'){
+                                alert("RIGHT");
+                            }
+                        }
+                    });
+                    var lessons = []
+                    $('.list-lesson li input[type="checkbox"]').each(function(){
+                        if($(this).is(":checked")) {
+                            lessons.push('"'+$(this).attr("name")+'"');
+                        }
+                    });
+                    var jsonStr = '{"lessons_id": ['+lessons+']}';
+                    $.ajax({
+                        url: 'http://localhost:8080/api/task', 
+                        type: 'POST',
+                        data: jsonStr,
+                        dataType: 'json',
+                        success: function (data) {
+                            $("#quiz-form-run span").html(data.question_word);
+                            $("#b1").html(data.word1)
+                            $("#b2").html(data.word2)
+                            $("#b3").html(data.word3)
+                            $("#b4").html(data.word4)
+                        }
+                    });
+                
+                });
+            });
+        </script>
         <style>
-            .button {
-                background-color: #4CAF50;
+            #form {
+                position: absolute;
+                top:50%;
+                left:50%;
+                margin: -150px 0 0 -160px;
+                min-width: 400px;
+                border: 5px solid red;
+                border-radius: 20px;
+            }
+            #quizForm {
+                float: left;
+            }
+            #lessonsList {
+                float: right;
+                min-width: 150px;
+                max-height: 320px;
+            }
+            #buttonStart {
+                position: relative;
+                left: 50%;
+                margin: 0;
+                -ms-transform: translate(-50%, -50%);
+                transform: translate(-50%, -50%);
+                background-color: #008CBA;
                 border: none;
                 color: white;
-                padding: 10px 32px;
+                padding: 10px 2px;
                 text-align: center;
                 text-decoration: none;
-                display: inline-block;
-                font-size: 16px;
+                font-size: 15px;
                 margin: 4px 2px;
                 cursor: pointer;
+                min-width: 100px;
+                border-radius: 5px;
             }
+            #getLessonsId {
+                position: relative;
+                left: 50%;
+                margin: 0;
+                -ms-transform: translate(-50%, -50%);
+                transform: translate(-50%, -50%);
+                background-color: #555555;
+                border: none;
+                color: white;
+                padding: 10px 2px;
+                text-align: center;
+                text-decoration: none;
+                font-size: 15px;
+                margin: 4px 2px;
+                cursor: pointer;
+                min-width: 100px;
+                border-radius: 5px;
+            }
+            .listButton {
+                display: list-item;
+                border: none;
+                color: white;
+                padding: 10px 0px;
+                text-align: center;
+                text-decoration: none;
+                font-size: 16px;
+                margin: 4px 2px;
+                -webkit-transition-duration: 0.4s; /* Safari */
+                transition-duration: 0.4s;
+                cursor: pointer;
+                background-color: white;
+                color: black;
+                border: 2px solid #555555;
+                min-width: 200px;
+                min-height: 48px;
+            }
+            .listButton:hover {
+                background-color: #555555;
+                color: white;
+            }
+            
         </style>
     </head>
     <body>
-        <p>Question:  <b>{{.Qword}}</b></p>
-        <ul style="list-style-type: none;padding: 0;">
-            <li><a class="button" href="/answer/?a={{.Answer1}}">{{.Answer1}}</a></li>
-            <li><a class="button" href="/answer/?a={{.Answer2}}">{{.Answer2}}</a></li>
-            <li><a class="button" href="/answer/?a={{.Answer3}}">{{.Answer3}}</a></li>
-            <li><a class="button" href="/answer/?a={{.Answer4}}">{{.Answer4}}</a></li>
-        </ul>
+        <div id="form">
+                <h2 align="center">Welcome to RU-JP Quiz!</h2>
+            <div id="quizForm">
+                <button id="buttonStart">Run</button>
+                <div id="quiz-form-run">
+                    <p style="text-align: center;font-style: italic;font-size: 12pt;">Word: <span style="font-weight: 800;font-size: 15pt;font-style: normal;">Hello</span></p>
+                    <button id="b1" class="listButton">...</button>
+                    <button id="b2" class="listButton">...</button>
+                    <button id="b3" class="listButton">...</button>
+                    <button id="b4" class="listButton">...</button>
+                </div>
+            </div>
+            <div id="lessonsList">
+                <button id="getLessonsId">Get Lessons</button>
+                <ul class="list-lesson" style="list-style-type: none;overflow: auto;height: 230px;border-left: 2px solid black;"></ul>
+            </div>
+        </div>
     </body>
 </html>

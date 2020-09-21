@@ -3,7 +3,7 @@
 *Hello!*
 *It's a quiz game for learning japanese language.*
 
-### Examples JSONs
+### Examples of requests
 
 **`/task`** - get new quiz task
 ```
@@ -14,10 +14,10 @@
 {
     "question_word": "Ты",
     "right_answer": "あなた",
-    "wrod1": "わたし",
-    "wrod2": "せんせい",
-    "wrod3": "いしゃ",
-    "wrod4": "これ"
+    "word1": "わたし",
+    "word2": "せんせい",
+    "word3": "いしゃ",
+    "word4": "これ"
 }
 ```
 **`/word`** - add new word in DB
@@ -39,4 +39,9 @@ dictionary_id
 *Response example :* 
 ```
 "WRONG"
+```
+**`/lessons`** - get numbers of lessons from DB
+*Response example :* 
+```
+[1,3,4]
 ```
