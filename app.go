@@ -66,8 +66,7 @@ func getTask(w http.ResponseWriter, r *http.Request) {
 	var trWord string
 	_ = json.NewDecoder(r.Body).Decode(&lID)
 	lIDstr := strings.Join(lID.LessonsID, ",")
-	var sqlSelectTask = "SELECT ru_word, jp_word FROM dictionary WHERE lesson_id in (" + lIDstr + ") ORDER BY random() LIMIT 4;"
-	rows, err := dbc.Query(sqlSelectTask)
+	rows, err := dbc.Query("SELECT ru_word, jp_word FROM dictionary WHERE lesson_id in (" + lIDstr + ") ORDER BY random() LIMIT 4;")
 	if err != nil {
 		panic(err)
 	}
@@ -118,6 +117,28 @@ func checkTask(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
+func getLessons(w http.ResponseWriter, r *http.Request) {
+	var aid []int
+	rows, err := dbc.Query("SELECT DISTINCT(lesson_id) FROM dictionary;")
+	if err != nil {
+		panic(err)
+	}
+	for rows.Next() {
+		var id int
+		err = rows.Scan(&id)
+		if err != nil {
+			panic(err)
+		}
+		aid = append(aid, id)
+	}
+	err = rows.Err()
+	if err != nil {
+		panic(err)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(aid)
+}
+
 func dbConnect() *sql.DB {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
 		"password=%s dbname=%s sslmode=disable",
@@ -140,5 +161,6 @@ func main() {
 	r.HandleFunc("/word", addNewWord).Methods("POST")
 	r.HandleFunc("/task", getTask).Methods("POST")
 	r.HandleFunc("/check", checkTask).Methods("POST")
+	r.HandleFunc("/lessons", getLessons).Methods("GET")
 	log.Fatal(http.ListenAndServe(":8080", r))
 }

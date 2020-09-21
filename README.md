@@ -3,7 +3,7 @@
 *Hello!*
 *It's a quiz game for learning japanese language.*
 
-### Exaples JSONs
+### Examples JSONs
 
 **`/task`** - get new quiz task
 ```
@@ -12,12 +12,12 @@
 *Response example :*  
 ```
 {
-    "question_word": "y",
-    "right_answer": "n",
-    "wrod1": "n",
-    "wrod2": "n",
-    "wrod3": "n",
-    "wrod4": "n"
+    "question_word": "Ты",
+    "right_answer": "あなた",
+    "wrod1": "わたし",
+    "wrod2": "せんせい",
+    "wrod3": "いしゃ",
+    "wrod4": "これ"
 }
 ```
 **`/word`** - add new word in DB
